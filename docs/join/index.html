@@ -72,21 +72,36 @@
   var WEB = 'https://r3mc10.github.io/ai-dev-studio/join#';
   var CROCK = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
   function $(id) { return document.getElementById(id); }
-  function decode(code) {      // Crockford base32 -> the invite's JSON (display only: the app checks everything again)
-    var s = code.replace(/^MJI[23]-?/, ''), bits = 0, n = 0, out = [];
+  function bytes(s) {          // Crockford base32 -> bytes
+    var bits = 0, n = 0, out = [];
     for (var i = 0; i < s.length; i++) {
       var v = CROCK.indexOf(s.charAt(i));
       if (v < 0) return null;
       bits = ((bits << 5) | v) & 0xffff; n += 5;
       if (n >= 8) { n -= 8; out.push((bits >> n) & 255); }
     }
+    return out;
+  }
+  function decode(code) {      // -> the invite's JSON (display only: the app checks everything again)
+    if (/^MJI4/.test(code)) return decode4(code);
+    var out = bytes(code.replace(/^MJI[23]-?/, ''));
+    if (!out) return null;
     try { return JSON.parse(new TextDecoder('utf-8').decode(new Uint8Array(out))); } catch (e) { return null; }
+  }
+  function decode4(code) {     // [0.3.16] a short link: no name in it, only the fingerprint + expiry (the app shows the rest)
+    var b = bytes(code.slice(4)), B32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567', fp = '', bits = 0, n = 0;
+    if (!b || [38, 44, 56].indexOf(b.length) < 0 || (b[0] & 15) !== 1) return null;
+    for (var i = 27; i < 32; i++) {
+      bits = ((bits << 8) | b[i]) & 0xffff; n += 8;
+      while (n >= 5) { n -= 5; fp += B32.charAt((bits >> n) & 31); }
+    }
+    return {acct: true, fp: fp.slice(0, 4) + '-' + fp.slice(4), exp: 1767225600 + ((b[32] << 16) | (b[33] << 8) | b[34]) * 60};
   }
   function clean(t, max) { return String(t || '').replace(/[\u0000-\u001f\u007f]/g, '').slice(0, max); }
   var raw = '';
   try { raw = decodeURIComponent(String(location.hash || '').replace(/^#/, '')); } catch (e) { raw = ''; }
   var code = raw.replace(/[\s-]/g, '').toUpperCase().replace(/^MJI3/, 'MJI3-').replace(/^MJI2/, 'MJI2-');
-  var obj = /^MJI[23]-[0-9A-Z]{40,4000}$/.test(code) ? decode(code) : null;
+  var obj = /^MJI[23]-[0-9A-Z]{40,4000}$/.test(code) || /^MJI4[0-9A-Z]{60,100}$/.test(code) ? decode(code) : null;
   if (!obj || typeof obj !== 'object' || !obj.acct) { $('none').hidden = false; return; }
   var studio = clean(obj.n, 60) || 'A studio', owner = clean(obj.o, 60);
   $('good').hidden = false;
@@ -94,7 +109,8 @@
   $('name').textContent = studio;
   var ini = (owner || studio).trim().split(/\s+/);
   $('av').textContent = ((ini[0] || '?').charAt(0) + (ini.length > 1 ? ini[ini.length - 1].charAt(0) : '')).toUpperCase();
-  $('fpline').hidden = true;      // the app shows the verified fingerprint on its own "Join?" prompt
+  $('fpline').hidden = !obj.fp;   // MJI3: the app shows the verified fingerprint on its own "Join?" prompt
+  if (obj.fp) { $('fp').textContent = obj.fp; $('av').textContent = '?'; }
   if (typeof obj.exp === 'number' && obj.exp * 1000 < Date.now()) {
     $('msg').className = 'ok bad';
     $('msg').textContent = 'This invite has expired. Ask ' + (owner || 'your friend') + ' for a new one.';
