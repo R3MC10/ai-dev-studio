@@ -1,0 +1,118 @@
+<!doctype html>
+<!-- AI Dev Studio invite landing page: https://r3mc10.github.io/ai-dev-studio/join#<invite>
+     Source of docs/join/index.html in the PUBLIC repo R3MC10/ai-dev-studio (GitHub Pages from /docs). Staged here; the
+     owner publishes it. Self-contained: no scripts, fonts or images from anywhere else, no analytics, no requests at all.
+     The invite rides in the #fragment, which browsers never send to any server (GitHub Pages included); this page reads
+     it only in the browser. "Open in AI Dev Studio" uses the aidevstudio:// link the app's setup registered; "Install"
+     copies the invite first, and the app offers it on its first run (asking before it joins). -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<title>Join a studio - AI Dev Studio</title>
+<style>
+  :root{--bg:#f6f7f9;--panel:#fff;--ink:#141821;--ink2:#4a5263;--line:#dfe3ea;--accent:#2f6fde;--accent-ink:#fff;--soft:#eaf1fd;--bad:#b42318}
+  @media (prefers-color-scheme: dark){:root{--bg:#0e1117;--panel:#161b24;--ink:#e6e9ef;--ink2:#9aa3b2;--line:#2a3140;--accent:#5aa9ff;--accent-ink:#0e1117;--soft:#1b2433;--bad:#ff8a80}}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif}
+  main{max-width:560px;margin:0 auto;padding:40px 16px 56px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:28px 24px}
+  .brand{font-weight:600;color:var(--ink2);font-size:14px;letter-spacing:.02em;margin:0 0 18px}
+  h1{font-size:26px;line-height:1.25;margin:0 0 8px}
+  p{margin:0 0 14px;color:var(--ink2)}
+  .who{display:flex;gap:14px;align-items:center;background:var(--soft);border-radius:12px;padding:14px;margin:18px 0}
+  .av{width:48px;height:48px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-weight:700;flex:0 0 auto}
+  .who b{display:block;color:var(--ink);font-size:18px}
+  .fp{font-family:ui-monospace,Consolas,monospace;letter-spacing:.06em}
+  .btns{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+  .btn{display:block;text-align:center;text-decoration:none;border-radius:10px;padding:13px 16px;font-weight:600;font-size:16px;border:1px solid var(--line);color:var(--ink);background:var(--panel);cursor:pointer;font-family:inherit}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  ol{padding-left:20px;color:var(--ink2);margin:18px 0 0}
+  ol li{margin:4px 0}
+  .note{font-size:13px;color:var(--ink2);margin-top:18px}
+  .bad{color:var(--bad)}
+  .ok{font-size:14px;color:var(--ink2);min-height:20px;margin-top:8px;text-align:center}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <div class="card">
+    <p class="brand">AI Dev Studio</p>
+    <div id="good" hidden>
+      <h1 id="title">You're invited to a studio</h1>
+      <p>Join to connect your two studios: private mail and files, PC to PC.</p>
+      <div class="who"><div class="av" id="av">?</div><div><b id="name">A studio</b><span id="fpline">Fingerprint <span class="fp" id="fp"></span></span></div></div>
+      <div class="btns">
+        <a class="btn primary" id="open" href="#">Open in AI Dev Studio</a>
+        <button class="btn" id="install" type="button">Install AI Dev Studio</button>
+        <button class="btn" id="copy" type="button">Copy the invite</button>
+      </div>
+      <div class="ok" id="msg" role="status" aria-live="polite"></div>
+      <ol>
+        <li>Already have AI Dev Studio? Press <b>Open in AI Dev Studio</b>, then <b>Join</b>.</li>
+        <li>New here? Press <b>Install</b>. The invite is copied for you; when AI Dev Studio starts the first time, it asks whether to join.</li>
+        <li>Nothing opened? In the app, open People &gt; Paste a link or code and paste the invite.</li>
+      </ol>
+      <p class="note">The invite works once and expires after 24 hours. It stays in your browser: this page sends nothing anywhere. Only download AI Dev Studio from its official release page (the Install button).</p>
+    </div>
+    <div id="none" hidden>
+      <h1>This invite link is incomplete</h1>
+      <p class="bad">The part after the # is missing or damaged. Ask your friend to send the whole link again.</p>
+      <div class="btns"><a class="btn" id="install2" href="https://github.com/R3MC10/ai-dev-studio/releases/latest" rel="noopener noreferrer">Get AI Dev Studio</a></div>
+    </div>
+  </div>
+</main>
+<script>
+(function () {
+  'use strict';
+  var RELEASES = 'https://github.com/R3MC10/ai-dev-studio/releases/latest';
+  var WEB = 'https://r3mc10.github.io/ai-dev-studio/join#';
+  var CROCK = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+  function $(id) { return document.getElementById(id); }
+  function decode(code) {      // Crockford base32 -> the invite's JSON (display only: the app checks everything again)
+    var s = code.replace(/^MJI[23]-?/, ''), bits = 0, n = 0, out = [];
+    for (var i = 0; i < s.length; i++) {
+      var v = CROCK.indexOf(s.charAt(i));
+      if (v < 0) return null;
+      bits = ((bits << 5) | v) & 0xffff; n += 5;
+      if (n >= 8) { n -= 8; out.push((bits >> n) & 255); }
+    }
+    try { return JSON.parse(new TextDecoder('utf-8').decode(new Uint8Array(out))); } catch (e) { return null; }
+  }
+  function clean(t, max) { return String(t || '').replace(/[\u0000-\u001f\u007f]/g, '').slice(0, max); }
+  var raw = '';
+  try { raw = decodeURIComponent(String(location.hash || '').replace(/^#/, '')); } catch (e) { raw = ''; }
+  var code = raw.replace(/[\s-]/g, '').toUpperCase().replace(/^MJI3/, 'MJI3-').replace(/^MJI2/, 'MJI2-');
+  var obj = /^MJI[23]-[0-9A-Z]{40,4000}$/.test(code) ? decode(code) : null;
+  if (!obj || typeof obj !== 'object' || !obj.acct) { $('none').hidden = false; return; }
+  var studio = clean(obj.n, 60) || 'A studio', owner = clean(obj.o, 60);
+  $('good').hidden = false;
+  $('title').textContent = owner ? owner + ' invited you to their studio' : 'You’re invited to ' + studio;
+  $('name').textContent = studio;
+  var ini = (owner || studio).trim().split(/\s+/);
+  $('av').textContent = ((ini[0] || '?').charAt(0) + (ini.length > 1 ? ini[ini.length - 1].charAt(0) : '')).toUpperCase();
+  $('fpline').hidden = true;      // the app shows the verified fingerprint on its own "Join?" prompt
+  if (typeof obj.exp === 'number' && obj.exp * 1000 < Date.now()) {
+    $('msg').className = 'ok bad';
+    $('msg').textContent = 'This invite has expired. Ask ' + (owner || 'your friend') + ' for a new one.';
+  }
+  var link = WEB + code;
+  $('open').href = 'aidevstudio://join#' + code;
+  function copy(then) {
+    var done = function (ok) { $('msg').textContent = ok ? 'Invite copied.' : 'Copy did not work: select the link in the address bar and copy it.'; if (then) then(); };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(link).then(function () { done(true); }, function () { done(false); }); return; }
+    } catch (e) { /* fall through */ }
+    done(false);
+  }
+  $('copy').addEventListener('click', function () { copy(null); });
+  $('install').addEventListener('click', function () {
+    copy(function () { $('msg').textContent = 'Invite copied. Opening the download page…'; setTimeout(function () { location.href = RELEASES; }, 600); });
+  });
+})();
+</script>
+</body>
+</html>
